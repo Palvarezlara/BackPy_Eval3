@@ -1,0 +1,46 @@
+{
+  "family": "backend-products",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::PLACEHOLDER_ACCOUNT_ID:role/LabRole",
+  "taskRoleArn": "arn:aws:iam::PLACEHOLDER_ACCOUNT_ID:role/LabRole",
+  "containerDefinitions": [
+    {
+      "name": "backend-products",
+      "image": "PLACEHOLDER_ACCOUNT_ID.dkr.ecr.PLACEHOLDER_REGION.amazonaws.com/backend-products:latest",
+      "portMappings": [
+        {
+          "containerPort": 8082,
+          "hostPort": 8082,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "DB_HOST",     "value": "PLACEHOLDER_DB_HOST" },
+        { "name": "DB_PORT",     "value": "3306" },
+        { "name": "DB_USER",     "value": "PLACEHOLDER_DB_USER" },
+        { "name": "DB_PASSWORD", "value": "PLACEHOLDER_DB_PASSWORD" },
+        { "name": "DB_NAME",     "value": "products_db" },
+        { "name": "PORT",        "value": "8082" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/backend-products",
+          "awslogs-region": "PLACEHOLDER_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8082/api/products || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "essential": true
+    }
+  ]
+}
