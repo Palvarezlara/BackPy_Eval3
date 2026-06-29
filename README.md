@@ -1,30 +1,29 @@
-# Backend 2 - Product Service
+# Backend Products Service — Python Flask
 
-Backend en Python (Flask) para gestión de productos con base de datos MySQL.
+Servicio REST para la gestión de productos, desarrollado con Python y Flask. Forma parte del proyecto **Innovatech Chile** desplegado en AWS ECS.
 
-## Características
+## Tecnologías
 
-- API REST para gestión de productos
-- CRUD completo de productos
-- Búsqueda por nombre, precio y stock
-- Base de datos MySQL
-- Configuración vía archivo .env
+- **Runtime:** Python 3.11
+- **Framework:** Flask 3.0
+- **Base de datos:** MySQL 8.0
+- **Contenedor:** Docker (imagen base `python:3.11-slim`)
+- **CI/CD:** GitHub Actions → Amazon ECR → Amazon ECS
 
-## Requisitos
+## Endpoints
 
-- Python 3.8 o superior
-- MySQL 8.0 o superior
-- pip
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/products` | Obtener todos los productos |
+| GET | `/api/products/:id` | Obtener producto por ID |
+| POST | `/api/products` | Crear nuevo producto |
+| PUT | `/api/products/:id` | Actualizar producto |
+| DELETE | `/api/products/:id` | Eliminar producto |
+| GET | `/api/products/search` | Buscar por nombre, precio o stock |
 
-## Configuración
+## Variables de entorno
 
-1. Copiar el archivo de ejemplo:
-```bash
-cp .env.example .env
-```
-
-2. Editar `.env` con sus credenciales de MySQL:
-```
+```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
@@ -33,46 +32,43 @@ DB_NAME=products_db
 PORT=8082
 ```
 
-3. Crear la base de datos en MySQL:
-```sql
-CREATE DATABASE products_db;
-```
-
-## Instalación
+## Ejecución local (sin Docker)
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Ejecutar
-
-```bash
+cp .env.example .env
+# edita .env con tus credenciales
 python app.py
 ```
 
-El servidor iniciará en el puerto 8082.
+## Ejecución con Docker
 
-## Endpoints
-
-- `POST /api/products` - Crear nuevo producto
-- `GET /api/products` - Obtener todos los productos
-- `GET /api/products/{id}` - Obtener producto por ID
-- `GET /api/products/search?name=xxx` - Buscar productos por nombre
-- `GET /api/products/search?minPrice=xxx&maxPrice=yyy` - Buscar por rango de precio
-- `GET /api/products/search?minStock=xxx` - Buscar por stock mínimo
-- `PUT /api/products/{id}` - Actualizar producto
-- `DELETE /api/products/{id}` - Eliminar producto
-
-## Ejemplo de Uso
-
-Crear producto:
 ```bash
-curl -X POST http://localhost:8082/api/products \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Laptop HP","description":"Laptop de 15.6 pulgadas","price":899.99,"stock":15,"icon":"💻"}'
+docker build -t backend-products .
+docker run -p 8082:8082 --env-file .env backend-products
 ```
 
-Obtener productos:
+## Ejecución completa con Docker Compose
+
+Desde la carpeta raíz del proyecto:
+
 ```bash
-curl http://localhost:8082/api/products
+docker-compose up --build
 ```
+
+El servicio estará disponible en `http://localhost:8082`
+
+## Pipeline CI/CD
+
+Cada `push` a la rama `main` dispara el workflow `.github/workflows/deploy.yml` que:
+
+1. **Test** — ejecuta las pruebas disponibles
+2. **Build** — construye la imagen Docker
+3. **Push** — publica la imagen en Amazon ECR con tag del commit
+4. **Deploy** — actualiza el servicio en Amazon ECS Fargate
+
+Los secretos de AWS y base de datos se gestionan mediante **GitHub Secrets**, sin exposición en el código.
+
+## Arquitectura en la nube
+
+El servicio corre en **Amazon ECS Fargate** dentro de una VPC privada, detrás de un **Application Load Balancer** en el puerto 8082. Los logs se envían automáticamente a **Amazon CloudWatch** en el grupo `/ecs/backend-products`.
